@@ -1,3 +1,4 @@
+import os
 from typing import Any, ClassVar, Dict, Optional, Union
 
 from esperanto import (
@@ -99,6 +100,39 @@ class ModelManager:
     def __init__(self):
         pass  # No caching needed
 
+    def _infer_provider_from_model_name(self, model_name: str) -> Optional[str]:
+        name = model_name.lower()
+        if name.startswith("gemini"):
+            return "google"
+        if name.startswith("gpt") or name.startswith("o1") or name.startswith("o3") or name.startswith("o4"):
+            return "openai"
+        if name.startswith("claude"):
+            return "anthropic"
+        return None
+
+    async def _get_env_model_by_name(self, model_name: str, model_type: str, **kwargs) -> Optional[ModelType]:
+        provider = self._infer_provider_from_model_name(model_name)
+        if not provider:
+            return None
+
+        from open_notebook.ai.key_provider import provision_provider_keys
+
+        await provision_provider_keys(provider)
+        config = dict(kwargs)
+        if model_type == "language":
+            return AIFactory.create_language(
+                model_name=model_name,
+                provider=provider,
+                config=config,
+            )
+        if model_type == "embedding":
+            return AIFactory.create_embedding(
+                model_name=model_name,
+                provider=provider,
+                config=config,
+            )
+        return None
+
     async def get_model(self, model_id: str, **kwargs) -> Optional[ModelType]:
         """Get a model by ID. Esperanto will cache the actual model instance."""
         if not model_id:
@@ -107,6 +141,12 @@ class ModelManager:
         try:
             model: Model = await Model.get(model_id)
         except Exception:
+            if not model_id.startswith("model:"):
+                direct_model = await self._get_env_model_by_name(
+                    model_id, "language", **kwargs
+                )
+                if direct_model:
+                    return direct_model
             raise ConfigurationError(f"Model with ID {model_id} not found")
 
         if not model.type or model.type not in [

@@ -20,6 +20,243 @@
   }
 }
 
+.genui-chat-view {
+  --openui-background: #1f1f1f;
+  --openui-foreground: #252525;
+  --openui-popover-background: #2b2b2b;
+  --openui-sunk: rgba(255, 255, 255, 0.05);
+  --openui-sunk-deep: rgba(255, 255, 255, 0.08);
+  --openui-highlight: rgba(255, 255, 255, 0.07);
+  --openui-highlight-strong: rgba(255, 255, 255, 0.16);
+  --openui-chat-user-response-bg: #303030;
+  --openui-chat-user-response-text: #f0f0f0;
+  --openui-text-neutral-primary: #ececec;
+  --openui-text-neutral-secondary: #b7b7b7;
+  --openui-text-neutral-tertiary: #7e7e7e;
+  --openui-border-default: rgba(255, 255, 255, 0.08);
+  --openui-border-interactive: rgba(255, 255, 255, 0.12);
+  --openui-border-interactive-emphasis: rgba(255, 255, 255, 0.22);
+  --openui-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --openui-font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --openui-font-label: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --openui-text-body-default: 400 15.5px/1.58 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --openui-text-body-sm: 400 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --openui-text-label-default: 400 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: #1f1f1f;
+  color: #ececec;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+/* Model selector bar below the OpenUI composer */
+.genui-model-bar {
+  flex-shrink: 0;
+  background: #1f1f1f;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 4px clamp(18px, 5vw, 56px) 4px;
+}
+
+.genui-chat-view .openui-shell-container,
+.genui-chat-view .openui-shell-thread-container,
+.genui-chat-view .openui-shell-thread-wrapper,
+.genui-chat-view .openui-shell-thread-chat-panel,
+.genui-chat-view .openui-shell-thread-scroll-container,
+.genui-chat-view .openui-shell-thread-scroll-area,
+.genui-chat-view .openui-shell-welcome-screen {
+  background: #1f1f1f !important;
+}
+
+.genui-chat-view .openui-shell-container {
+  width: 100%;
+  height: 100%;
+  color: #ececec;
+}
+
+.genui-chat-view .openui-shell-sidebar-container {
+  display: none !important;
+}
+
+.genui-chat-view .openui-shell-thread-header {
+  background: transparent !important;
+  padding: 12px 16px 6px !important;
+}
+
+.genui-chat-view .openui-shell-thread-header:empty {
+  display: none !important;
+  padding: 0 !important;
+}
+
+.genui-chat-view .openui-shell-thread-chat-panel {
+  width: 100% !important;
+  min-width: 0;
+  flex: 1 1 auto !important;
+}
+
+.genui-chat-view .openui-shell-thread-scroll-area {
+  padding: 24px clamp(18px, 5vw, 56px) 28px !important;
+}
+
+.genui-chat-view .openui-shell-thread-messages {
+  width: 100% !important;
+  max-width: 780px !important;
+  gap: 26px !important;
+  margin: 0 auto !important;
+}
+
+.genui-chat-view .openui-shell-thread-message-assistant {
+  padding: 0 !important;
+  gap: 0 !important;
+  justify-content: flex-start;
+}
+
+.genui-chat-view .openui-shell-thread-message-assistant__logo {
+  display: none !important;
+}
+
+.genui-chat-view .openui-shell-thread-message-assistant__content {
+  max-width: 100%;
+  gap: 12px !important;
+}
+
+.genui-chat-view .openui-shell-thread-message-assistant__text,
+.genui-chat-view .openui-shell-thread-message-assistant__text * {
+  background: transparent !important;
+  color: #ececec !important;
+  font: var(--openui-text-body-default) !important;
+  letter-spacing: 0 !important;
+  line-height: 1.58 !important;
+}
+
+.genui-chat-view .openui-shell-thread-message-assistant__text:first-child {
+  margin-top: 0 !important;
+}
+
+.genui-chat-view .openui-shell-thread-message-user {
+  justify-content: flex-end;
+  padding: 0 !important;
+}
+
+.genui-chat-view .openui-shell-thread-message-user__content {
+  max-width: min(72%, 620px) !important;
+  padding: 12px 16px !important;
+  background: #303030 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 14px !important;
+  color: #f0f0f0 !important;
+  font: var(--openui-text-body-default) !important;
+  letter-spacing: 0 !important;
+  line-height: 1.55 !important;
+  box-shadow: none !important;
+}
+
+.genui-chat-view .openui-genui-user-message {
+  align-items: flex-end;
+  max-width: min(72%, 620px);
+}
+
+.genui-chat-view .openui-genui-user-message__form-state {
+  background: #303030 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+}
+
+.genui-chat-view .openui-shell-thread-error,
+.genui-chat-view .openui-shell-thread-message-loading {
+  padding: 0 !important;
+  color: #ececec !important;
+}
+
+.genui-chat-view .openui-shell-thread-composer,
+.genui-chat-view .openui-shell-conversation-starter {
+  width: 100% !important;
+  max-width: 780px !important;
+  margin: 0 auto !important;
+  padding: 16px clamp(18px, 5vw, 56px) 10px !important;
+  background: transparent !important;
+}
+
+.genui-chat-view .openui-shell-thread-composer__input-wrapper,
+.genui-chat-view .openui-shell-desktop-welcome-composer {
+  background: #252525 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.22) !important;
+  padding: 12px !important;
+}
+
+.genui-chat-view .openui-shell-desktop-welcome-composer {
+  max-width: 780px !important;
+}
+
+.genui-chat-view .openui-shell-thread-composer__input,
+.genui-chat-view .openui-shell-desktop-welcome-composer__input,
+.genui-chat-view .openui-shell-thread-composer textarea,
+.genui-chat-view .openui-shell-thread-composer input {
+  min-height: 28px !important;
+  background: transparent !important;
+  color: #ececec !important;
+  caret-color: #ececec !important;
+  font: var(--openui-text-body-default) !important;
+  letter-spacing: 0 !important;
+  line-height: 1.55 !important;
+}
+
+.genui-chat-view .openui-shell-thread-composer__input::placeholder,
+.genui-chat-view .openui-shell-desktop-welcome-composer__input::placeholder,
+.genui-chat-view input::placeholder,
+.genui-chat-view textarea::placeholder {
+  color: #8f8f8f !important;
+  opacity: 1;
+}
+
+.genui-chat-view .openui-shell-thread-composer button,
+.genui-chat-view .openui-shell-desktop-welcome-composer button,
+.genui-chat-view .openui-shell-thread-header button {
+  border-radius: 9999px !important;
+  color: #ececec !important;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.genui-chat-view .openui-shell-thread-composer button:hover,
+.genui-chat-view .openui-shell-desktop-welcome-composer button:hover,
+.genui-chat-view .openui-shell-thread-header button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.genui-chat-view .openui-shell-welcome-screen__title {
+  color: #f0f0f0 !important;
+}
+
+.genui-chat-view .openui-shell-welcome-screen__description,
+.genui-chat-view .openui-shell-conversation-starter-item-long,
+.genui-chat-view .openui-shell-conversation-starter-item-short {
+  color: #b7b7b7 !important;
+}
+
+.genui-chat-view .openui-shell-conversation-starter-item-short {
+  background: #292929 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.genui-chat-view .openui-shell-thread-messages .bg-white,
+.genui-chat-view .openui-shell-thread-messages .bg-gray-50,
+.genui-chat-view .openui-shell-thread-messages .bg-slate-50 {
+  background-color: #262626 !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.genui-chat-view .openui-shell-thread-messages .text-gray-500,
+.genui-chat-view .openui-shell-thread-messages .text-gray-400,
+.genui-chat-view .openui-shell-thread-messages .text-slate-500 {
+  color: #b7b7b7 !important;
+}
+
+.genui-chat-view .openui-shell-thread-messages button,
+.genui-chat-view .openui-shell-thread-messages button * {
+  color: #f0f0f0 !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 5px;

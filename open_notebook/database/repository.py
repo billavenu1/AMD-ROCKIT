@@ -100,7 +100,7 @@ async def repo_create(table: str, data: Dict[str, Any]) -> Dict[str, Any]:
         raise
     except Exception as e:
         logger.exception(e)
-        raise RuntimeError("Failed to create record")
+        raise RuntimeError(f"Failed to create record: {str(e)}")
 
 
 async def repo_relate(
@@ -191,4 +191,4 @@ async def repo_insert(
         if ignore_duplicates and "already contains" in str(e):
             return []
         logger.exception(e)
-        raise RuntimeError("Failed to create record")
+        raise RuntimeError(f"Failed to create record: {str(e)}")

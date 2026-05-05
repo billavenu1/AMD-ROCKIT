@@ -1,0 +1,20 @@
+-- Migration 15: GenUI sessions and messages tables
+-- Adds tables to support independent generative UI chat sessions
+
+-- GENUI SESSION
+DEFINE TABLE IF NOT EXISTS genui_session SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS title ON TABLE genui_session TYPE string DEFAULT "New Chat";
+DEFINE FIELD IF NOT EXISTS created ON TABLE genui_session TYPE datetime DEFAULT time::now();
+DEFINE FIELD IF NOT EXISTS updated ON TABLE genui_session TYPE datetime DEFAULT time::now();
+
+-- GENUI MESSAGE
+DEFINE TABLE IF NOT EXISTS genui_message SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS session_id ON TABLE genui_message TYPE record<genui_session>;
+DEFINE FIELD IF NOT EXISTS role ON TABLE genui_message TYPE string ASSERT $value INSIDE ["user", "human", "assistant", "ai", "system"];
+DEFINE FIELD IF NOT EXISTS content ON TABLE genui_message TYPE any;
+DEFINE FIELD IF NOT EXISTS order ON TABLE genui_message TYPE int;
+DEFINE FIELD IF NOT EXISTS created ON TABLE genui_message TYPE datetime DEFAULT time::now();
+DEFINE FIELD IF NOT EXISTS updated ON TABLE genui_message TYPE datetime DEFAULT time::now();
+
+-- Index for session messages
+DEFINE INDEX IF NOT EXISTS session_messages ON TABLE genui_message COLUMNS session_id, order;

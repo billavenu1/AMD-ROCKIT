@@ -20,7 +20,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useChat } from '../../hooks/useChat';
 import { useNotebook } from '../../hooks/useNotebooks';
-import { useModels } from '../../hooks/useModels';
+import { useAvailableModels } from '../../hooks/useModels';
 import { convertReferencesToCompactMarkdown, createCompactReferenceLinkComponent, ReferenceType } from '../../lib/utils/source-references';
 
 function AIMessageContent({
@@ -98,7 +98,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
   } = useChat(activeProjectId);
 
   const { data: project } = useNotebook(activeProjectId);
-  const { data: models = [] } = useModels('language');
+  const { data: availableModels = [] } = useAvailableModels();
 
   React.useEffect(() => {
     setCurrentSessionId(activeChatId);
@@ -106,7 +106,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
 
   const [input, setInput] = useState('');
   const [isIncognito, setIsIncognito] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<string | null>('gemini-3-flash-preview');
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [temperature, setTemperature] = useState(0.7);
@@ -115,16 +115,12 @@ export const ChatView: React.FC<ChatViewProps> = ({
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [activeTools, setActiveTools] = useState<string[]>([]);
 
+  // Set default model to the first entry in available_models.json
   React.useEffect(() => {
-    if (models.length === 0) return;
-    const defaultModel = models.find((model) =>
-      model.id === 'gemini-3-flash-preview' ||
-      model.name.toLowerCase().includes('gemini-3-flash-preview')
-    );
-    if (defaultModel && selectedModel === 'gemini-3-flash-preview') {
-      setSelectedModel(defaultModel.id);
+    if (availableModels.length > 0 && !selectedModel) {
+      setSelectedModel(availableModels[0].id);
     }
-  }, [models, selectedModel]);
+  }, [availableModels, selectedModel]);
 
   const handleSend = () => {
     if (!input.trim() || isSending) return;
@@ -369,7 +365,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   >
                     <div className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6]" />
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                      {models.find(m => m.id === selectedModel)?.name || selectedModel || 'Select Model'}
+                      {availableModels.find(m => m.id === selectedModel)?.name || selectedModel || 'Select Model'}
                     </span>
                     <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${showModelMenu ? 'rotate-180' : ''}`} />
                   </button>
@@ -382,7 +378,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         className="absolute bottom-full right-0 mb-3 w-48 bg-[#1F1F1F] border border-[#333] rounded-xl shadow-2xl overflow-hidden z-50 p-1"
                       >
-                        {models.map((m) => (
+                        {availableModels.map((m) => (
                           <button 
                             key={m.id}
                             onClick={() => { setSelectedModel(m.id); setShowModelMenu(false); }}

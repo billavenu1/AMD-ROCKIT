@@ -58,4 +58,4 @@ export interface ChatMessage {
 
 export type RetrievalMode = 'Hybrid' | 'Vector' | 'Notebook';
 
-export type View = 'dashboard' | 'elyra' | 'chat' | 'deploy' | 'models' | 'tools' | 'endpoints';
+export type View = 'dashboard' | 'elyra' | 'chat' | 'deploy' | 'models' | 'tools' | 'endpoints' | 'deployments' | 'vision';

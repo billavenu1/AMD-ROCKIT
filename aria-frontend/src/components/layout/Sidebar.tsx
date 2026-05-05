@@ -69,6 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleNewChat = () => {
     setActiveProjectId(null);
+    setIsChatsExpanded(true);
     createGenUISessionMutation.mutate(undefined, {
       onSuccess: (session) => setActiveChatId(session.id),
     });
@@ -286,13 +287,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           <div className="space-y-1">
-            <button 
-              onClick={() => setIsChatsExpanded(!isChatsExpanded)}
-              className="w-full flex items-center justify-between px-2 py-2 text-white hover:bg-[#1A1A1A]/30 rounded-lg group"
-            >
-              <span className="text-[13px] font-bold">Chats</span>
-              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isChatsExpanded ? '' : '-rotate-90'}`} />
-            </button>
+            <div className="group flex items-center justify-between rounded-lg px-2 py-2 text-white hover:bg-[#1A1A1A]/30">
+              <button
+                onClick={() => setIsChatsExpanded(!isChatsExpanded)}
+                className="flex min-w-0 flex-1 items-center text-left"
+              >
+                <span className="text-[13px] font-bold">Chats</span>
+              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={handleNewChat}
+                  className="rounded-md p-1 text-gray-500 opacity-80 transition-all hover:bg-[#2A2A2A] hover:text-white group-hover:opacity-100"
+                  aria-label="New chat"
+                  title="New chat"
+                >
+                  <SquarePen className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setIsChatsExpanded(!isChatsExpanded)}
+                  className="rounded-md p-0.5 text-gray-500 hover:bg-[#2A2A2A] hover:text-white"
+                  aria-label={isChatsExpanded ? 'Collapse chats' : 'Expand chats'}
+                  title={isChatsExpanded ? 'Collapse chats' : 'Expand chats'}
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isChatsExpanded ? '' : '-rotate-90'}`} />
+                </button>
+              </div>
+            </div>
 
             <AnimatePresence>
               {isChatsExpanded && (

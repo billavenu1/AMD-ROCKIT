@@ -1,5 +1,5 @@
 import asyncio
-from typing import ClassVar, Optional, List
+from typing import ClassVar, Optional, List, Any
 from loguru import logger
 from pydantic import Field, ConfigDict
 
@@ -14,11 +14,17 @@ class GenUISession(ObjectModel):
 
     async def get_messages(self) -> List["GenUIMessage"]:
         try:
+            session_id = str(self.id)
             msgs = await repo_query(
                 """
-                SELECT * FROM genui_message WHERE session_id = $id ORDER BY order ASC
+                SELECT * FROM genui_message
+                WHERE session_id = $record_id OR session_id = $string_id
+                ORDER BY order ASC
                 """,
-                {"id": ensure_record_id(self.id)},
+                {
+                    "record_id": ensure_record_id(session_id),
+                    "string_id": session_id,
+                },
             )
             return [GenUIMessage(**msg) for msg in msgs] if msgs else []
         except Exception as e:
@@ -28,7 +34,7 @@ class GenUISession(ObjectModel):
 
 class GenUIMessage(ObjectModel):
     table_name: ClassVar[str] = "genui_message"
-    session_id: str
+    session_id: Any
     role: str
-    content: str
+    content: Any
     order: int

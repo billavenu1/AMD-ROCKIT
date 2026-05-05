@@ -1,0 +1,3 @@
+-- Migration 15 Down: Remove GenUI tables
+REMOVE TABLE genui_message;
+REMOVE TABLE genui_session;

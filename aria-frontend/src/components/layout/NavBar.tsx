@@ -8,7 +8,9 @@ import {
   BrainCircuit, 
   Puzzle, 
   Terminal, 
-  Settings 
+  Settings,
+  Server,
+  Eye
 } from 'lucide-react';
 import { View } from '../../types';
 
@@ -31,6 +33,8 @@ export const NavBar: React.FC<NavBarProps> = ({
     { id: 'chat', label: 'Chat', icon: MessageSquare },
     { id: 'deploy', label: 'Deploy Agents', icon: Rocket },
     { id: 'models', label: 'Models', icon: BrainCircuit },
+    { id: 'deployments', label: 'Deployments', icon: Server },
+    { id: 'vision', label: 'Vision', icon: Eye },
     { id: 'tools', label: 'Tools', icon: Puzzle },
     { id: 'endpoints', label: 'Endpoints', icon: Terminal },
   ];

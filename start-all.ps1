@@ -1,5 +1,21 @@
 Write-Host "[*] Starting Open Notebook (Database + Elyra + API + Worker + Frontend)..." -ForegroundColor Cyan
 
+# Step 0: Check for FFmpeg (required for video intelligence)
+if (!(Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
+    Write-Host "[!] FFmpeg not found. This is required for video processing." -ForegroundColor Yellow
+    Write-Host "    Attempting to install via winget..." -ForegroundColor Yellow
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        winget install --id=Gyan.FFmpeg -e --source winget --accept-package-agreements --accept-source-agreements
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "[OK] FFmpeg installation triggered. Note: You might need to restart your terminal for PATH changes." -ForegroundColor Green
+        } else {
+            Write-Host "[ERROR] winget installation failed. Please install FFmpeg manually." -ForegroundColor Red
+        }
+    } else {
+        Write-Host "[ERROR] winget not found. Please install FFmpeg manually from https://ffmpeg.org/" -ForegroundColor Red
+    }
+}
+
 # Step 1: Start Docker services
 Write-Host "[1/4] Starting SurrealDB and Elyra..." -ForegroundColor Yellow
 docker compose -f docker-compose.dev.yml up -d surrealdb elyra
@@ -46,4 +62,20 @@ Write-Host "[4/4] Starting Next.js frontend (press Ctrl+C to stop)..." -Foregrou
 Write-Host ""
 
 Set-Location aria-frontend
-npm run dev
+
+# Install dependencies if node_modules is missing
+if (!(Test-Path "node_modules")) {
+    Write-Host "Installing frontend dependencies..." -ForegroundColor Yellow
+    if (Get-Command bun -ErrorAction SilentlyContinue) {
+        bun install
+    } else {
+        npm install
+    }
+}
+
+# Run dev server using bun if available, otherwise npm
+if (Get-Command bun -ErrorAction SilentlyContinue) {
+    bun run dev
+} else {
+    npm run dev
+}

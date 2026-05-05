@@ -1,0 +1,61 @@
+[
+  {
+    "id": "qwen-27b",
+    "name": "Qwen 27B",
+    "type": "LLM",
+    "description": "High performance large language model for complex reasoning and generation.",
+    "vram_required": "~24GB",
+    "icon": "cpu",
+    "deploy_options": {
+      "quantization": [
+        {"label": "4-bit", "value": "4-bit", "vram_estimate": "~14GB VRAM required"},
+        {"label": "8-bit", "value": "8-bit", "vram_estimate": "~24GB VRAM required"}
+      ],
+      "target_gpu": ["MI300X", "MI250", "MI210"]
+    }
+  },
+  {
+    "id": "qwen-7b",
+    "name": "Qwen 7B",
+    "type": "LLM",
+    "description": "Efficient language model for everyday tasks and applications.",
+    "vram_required": "~8GB",
+    "icon": "cpu",
+    "deploy_options": {
+      "quantization": [
+        {"label": "4-bit", "value": "4-bit", "vram_estimate": "~5GB VRAM required"},
+        {"label": "8-bit", "value": "8-bit", "vram_estimate": "~8GB VRAM required"}
+      ],
+      "target_gpu": ["MI300X", "MI250", "MI210"]
+    }
+  },
+  {
+    "id": "qwen-vl",
+    "name": "Qwen-VL",
+    "type": "Vision",
+    "description": "Vision-language model for image understanding and multimodal tasks.",
+    "vram_required": "~16GB",
+    "icon": "eye",
+    "deploy_options": {
+      "quantization": [
+        {"label": "4-bit", "value": "4-bit", "vram_estimate": "~10GB VRAM required"},
+        {"label": "8-bit", "value": "8-bit", "vram_estimate": "~16GB VRAM required"}
+      ],
+      "target_gpu": ["MI300X", "MI250", "MI210"]
+    }
+  },
+  {
+    "id": "bge-m3",
+    "name": "BGE-M3",
+    "type": "Embedding",
+    "description": "State-of-the-art embedding model for retrieval and semantic search.",
+    "vram_required": "~4GB",
+    "icon": "database",
+    "deploy_options": {
+      "quantization": [
+        {"label": "FP16", "value": "fp16", "vram_estimate": "~4GB VRAM required"}
+      ],
+      "target_gpu": ["MI300X", "MI250", "MI210"]
+    }
+  }
+]

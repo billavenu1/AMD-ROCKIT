@@ -16,10 +16,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from api.auth import PasswordAuthMiddleware
 from api.routers import (
     auth,
+    catalog,
     chat,
     config,
     context,
     credentials,
+    deployments,
     embedding,
     embedding_rebuild,
     episode_profiles,
@@ -35,6 +37,7 @@ from api.routers import (
     sources,
     speaker_profiles,
     transformations,
+    vision,
     genui_chat,
 )
 from api.routers import commands as commands_router
@@ -315,6 +318,9 @@ app.include_router(source_chat.router, prefix="/api", tags=["source-chat"])
 app.include_router(credentials.router, prefix="/api", tags=["credentials"])
 app.include_router(languages.router, prefix="/api", tags=["languages"])
 app.include_router(genui_chat.router, prefix="/api/genui", tags=["GenUI"])
+app.include_router(catalog.router, prefix="/api/catalog", tags=["catalog"])
+app.include_router(deployments.router, prefix="/api/deployments", tags=["deployments"])
+app.include_router(vision.router, prefix="/api/vision", tags=["vision"])
 
 
 @app.get("/")

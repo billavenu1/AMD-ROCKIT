@@ -50,7 +50,6 @@ tests/test_chunking.py
 tests/test_credentials_api.py
 tests/test_domain.py
 tests/test_embedding.py
-tests/test_genui_chat.py
 tests/test_graphs.py
 tests/test_models_api.py
 tests/test_notes_api.py

@@ -6,6 +6,9 @@ import { ChatView } from './components/chat/ChatView';
 import { GenUIChatView } from './components/chat/GenUIChatView';
 import { DeployAgentsView } from './components/deploy/DeployAgentsView';
 import { ElyraView } from './components/elyra/ElyraView';
+import { ModelCatalogView } from './components/models/ModelCatalogView';
+import { ActiveDeploymentsView } from './components/deployments/ActiveDeploymentsView';
+import { VisionView } from './components/vision/VisionView';
 import { View } from './types';
 
 export default function App() {
@@ -58,7 +61,7 @@ export default function App() {
               setIsRightPanelOpen={setIsRightPanelOpen}
             />
           ) : (
-            <GenUIChatView activeChatId={activeChatId} />
+            <GenUIChatView activeChatId={activeChatId} setActiveChatId={setActiveChatId} />
           )}
 
           {/* RIGHT PANEL - only when a project is active */}
@@ -76,6 +79,12 @@ export default function App() {
         <ElyraView />
       ) : currentView === 'deploy' ? (
         <DeployAgentsView />
+      ) : currentView === 'models' ? (
+        <ModelCatalogView />
+      ) : currentView === 'deployments' ? (
+        <ActiveDeploymentsView />
+      ) : currentView === 'vision' ? (
+        <VisionView />
       ) : (
         <div className="flex-1 flex items-center justify-center bg-[#0A0A0A] text-gray-700 text-sm italic font-medium uppercase tracking-[0.2em]">
           Coming Soon: {currentView}
