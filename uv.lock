@@ -2172,8 +2172,10 @@ dependencies = [
     { name = "openai" },
     { name = "pillow" },
     { name = "podcast-creator" },
+    { name = "psutil" },
     { name = "pycountry" },
     { name = "pydantic" },
+    { name = "pyrsmi" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "surreal-commands" },
@@ -2232,8 +2234,10 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "podcast-creator", specifier = ">=0.12.0,<1" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.1" },
+    { name = "psutil", specifier = ">=6.0.0" },
     { name = "pycountry", specifier = ">=26.2.16" },
     { name = "pydantic", specifier = ">=2.9.2" },
+    { name = "pyrsmi", specifier = ">=0.1.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "requests", specifier = ">=2.33.1" },
@@ -2887,6 +2891,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e8/52/d87eba7cb129b81563019d1679026e7a112ef76855d6159d24754dbd2a51/pyperclip-1.11.0.tar.gz", hash = "sha256:244035963e4428530d9e3a6101a1ef97209c6825edab1567beac148ccc1db1b6", size = 12185, upload-time = "2025-09-26T14:40:37.245Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/80/fc9d01d5ed37ba4c42ca2b55b4339ae6e200b456be3a1aaddf4a9fa99b8c/pyperclip-1.11.0-py3-none-any.whl", hash = "sha256:299403e9ff44581cb9ba2ffeed69c7aa96a008622ad0c46cb575ca75b5b84273", size = 11063, upload-time = "2025-09-26T14:40:36.069Z" },
+]
+
+[[package]]
+name = "pyrsmi"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5d/96/343863a8f82412cd0cb6e2dfc819a25f2d61df7a6df766ad097168018ae1/pyrsmi-1.1.0.tar.gz", hash = "sha256:083fc733310f6b310eb680d31e51dfb556000d27a1bc1ab6864e1a2813ea7b8b", size = 64343, upload-time = "2025-12-03T08:42:50.335Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/35/8b1280cd3619c47103686533c0e1e908f20976e6b5e07a1a52ffb46a70ed/pyrsmi-1.1.0-py2.py3-none-any.whl", hash = "sha256:80545fb7181a41a04928d68e99ff16fc3d0519501290da310727b82e5980b664", size = 22384, upload-time = "2025-12-03T08:42:49.133Z" },
 ]
 
 [[package]]

@@ -9,6 +9,7 @@ import { ElyraView } from './components/elyra/ElyraView';
 import { ModelCatalogView } from './components/models/ModelCatalogView';
 import { ActiveDeploymentsView } from './components/deployments/ActiveDeploymentsView';
 import { VisionView } from './components/vision/VisionView';
+import { DashboardView } from './components/dashboard/DashboardView';
 import { View } from './types';
 
 export default function App() {
@@ -75,6 +76,8 @@ export default function App() {
             />
           )}
         </div>
+      ) : currentView === 'dashboard' ? (
+        <DashboardView />
       ) : currentView === 'elyra' ? (
         <ElyraView />
       ) : currentView === 'deploy' ? (

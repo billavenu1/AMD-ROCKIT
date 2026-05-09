@@ -4,7 +4,7 @@ c = get_config()
 # Monkey-patch JupyterHandler to forcibly return our CSP
 import jupyter_server.base.handlers
 def _custom_csp(self):
-    return "frame-ancestors 'self' http://localhost:3000 http://localhost:5173"
+    return "frame-ancestors 'self' http://localhost:3000 http://localhost:5173 http://localhost:8502 *"
 jupyter_server.base.handlers.JupyterHandler.content_security_policy = property(_custom_csp)
 
 c.ServerApp.allow_origin = '*'

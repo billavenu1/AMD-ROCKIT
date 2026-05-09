@@ -42,6 +42,8 @@ Requires-Dist: duckduckgo-search>=8.1.1
 Requires-Dist: requests>=2.33.1
 Requires-Dist: pillow>=11.3.0
 Requires-Dist: yt-dlp>=2026.3.17
+Requires-Dist: psutil>=6.0.0
+Requires-Dist: pyrsmi>=0.1.0
 Provides-Extra: dev
 Requires-Dist: ipykernel>=6.29.5; extra == "dev"
 Requires-Dist: ruff>=0.5.5; extra == "dev"

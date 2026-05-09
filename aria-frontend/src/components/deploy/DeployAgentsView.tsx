@@ -1,225 +1,431 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  ChevronRight, 
-  Code2, 
   ChevronDown, 
-  BrainCircuit, 
-  Pin, 
-  Rocket, 
-  Zap, 
-  Layers, 
-  Activity, 
-  Bot, 
-  CheckCircle2, 
-  Box, 
-  FastForward, 
-  MessageSquare, 
-  Cpu 
+  X,
+  Loader2,
+  Check
 } from 'lucide-react';
 
+const API_BASE = 'http://localhost:5055';
+
 export const DeployAgentsView: React.FC = () => {
+  const [model, setModel] = useState('');
+  const [availableModels, setAvailableModels] = useState<{id: string, name: string}[]>([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/catalog/available-models`)
+      .then(res => res.json())
+      .then(data => {
+        setAvailableModels(data);
+        if (data && data.length > 0) {
+          setModel(data[0].id);
+        }
+      })
+      .catch(err => console.error("Failed to fetch available models:", err));
+  }, []);
+  const [instructions, setInstructions] = useState('');
+  const [knowledgeType, setKnowledgeType] = useState('Vision');
+  const [knowledgeSource, setKnowledgeSource] = useState('Image');
+  const [toolsActive, setToolsActive] = useState(['Code Execution', 'Database']);
+  const [workflowName, setWorkflowName] = useState('');
+  
+  const [activeTab, setActiveTab] = useState('Chat');
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [publishedEndpoint, setPublishedEndpoint] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+
+  // Chat preview state
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<{role: string; content: string}[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const removeTool = (tool: string) => {
+    setToolsActive(toolsActive.filter(t => t !== tool));
+  };
+
+  const buildPayload = () => ({
+    name: workflowName || `${model} Workflow`,
+    model,
+    instructions,
+    knowledge: { type: knowledgeType, source: knowledgeSource },
+    tools: toolsActive,
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    setStatusMsg(null);
+    try {
+      if (savedId) {
+        // Update existing
+        await fetch(`${API_BASE}/api/workflows/${savedId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload()),
+        });
+        setStatusMsg('Workflow updated');
+      } else {
+        // Create new
+        const res = await fetch(`${API_BASE}/api/workflows`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload()),
+        });
+        const data = await res.json();
+        setSavedId(data.workflow_id);
+        setStatusMsg(`Saved as ${data.workflow_id}`);
+      }
+    } catch (e: any) {
+      setStatusMsg(`Save failed: ${e.message}`);
+    } finally {
+      setSaving(false);
+      setTimeout(() => setStatusMsg(null), 3000);
+    }
+  };
+
+  const handlePublish = async () => {
+    setPublishing(true);
+    setStatusMsg(null);
+    try {
+      // Save first if not saved yet
+      let wfId = savedId;
+      if (!wfId) {
+        const res = await fetch(`${API_BASE}/api/workflows`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(buildPayload()),
+        });
+        const data = await res.json();
+        wfId = data.workflow_id;
+        setSavedId(wfId);
+      }
+
+      // Publish
+      const pubRes = await fetch(`${API_BASE}/api/workflows/${wfId}/publish`, {
+        method: 'POST',
+      });
+      const pubData = await pubRes.json();
+      setPublishedEndpoint(pubData.endpoint);
+      setStatusMsg(`Published! Endpoint: ${pubData.endpoint}`);
+    } catch (e: any) {
+      setStatusMsg(`Publish failed: ${e.message}`);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || !savedId || !publishedEndpoint) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput('');
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setChatLoading(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/workflows/${savedId}/invoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg }),
+      });
+      const data = await res.json();
+      setChatMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+    } catch (e: any) {
+      setChatMessages(prev => [...prev, { role: 'assistant', content: `Error: ${e.message}` }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0A0A0A] overflow-hidden">
-      <header className="h-16 flex items-center justify-between px-6 border-b border-[#1F1F1F] bg-[#0A0A0A]/80 backdrop-blur-md">
-        <div className="flex items-center gap-4">
-           <h2 className="text-sm font-bold text-white tracking-widest uppercase">Deploy Agents</h2>
-           <ChevronRight className="w-3 h-3 text-gray-700" />
-           <div className="flex items-center gap-1.5 px-2 py-1 bg-[#1A1A1A] rounded-md border border-[#333]">
-             <Code2 className="w-3.5 h-3.5 text-[#8B5CF6]" />
-             <span className="text-[11px] font-bold text-gray-300">Coding Agent</span>
-             <ChevronDown className="w-3 h-3 text-gray-600 ml-1" />
-           </div>
-        </div>
-      </header>
-      <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-[#080808]">
-        {/* TITLE CARD */}
-        <div className="flex items-center justify-between p-7 bg-[#0B0B0B] border border-[#1F1F1F] rounded-[32px] shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#8B5CF6]/5 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="flex items-center gap-6 relative z-10">
-             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#8B5CF6]/10 to-transparent flex items-center justify-center border border-[#8B5CF6]/20 shadow-inner">
-               <BrainCircuit className="w-7 h-7 text-[#8B5CF6]" />
-             </div>
-             <div>
-               <h3 className="text-xl font-bold text-white tracking-tight mb-1">Deploy Coding Agent</h3>
-               <p className="text-xs text-gray-500 font-medium">Design and deploy your autonomous coding pipeline. Select architecture and models.</p>
-             </div>
-          </div>
-          <div className="flex items-center gap-3 relative z-10">
-             <button className="flex items-center gap-2 px-4 py-2.5 border border-[#1F1F1F] bg-[#111] rounded-xl text-[11px] font-bold text-gray-500 hover:text-white hover:bg-[#161616] transition-all">
-               <Pin className="w-3.5 h-3.5" />
-               Save as Template
-             </button>
-             <button className="flex items-center gap-2 px-6 py-2.5 bg-[#8B5CF6] text-black font-extrabold text-[11px] rounded-xl hover:bg-[#7C3AED] transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)]">
-               <Rocket className="w-3.5 h-3.5" />
-               Deploy Agent
-             </button>
+    <div className="flex h-full w-full bg-black overflow-hidden text-white font-sans">
+      {/* Left Panel - Workflow Builder */}
+      <div className="w-[40%] min-w-[350px] max-w-[450px] flex flex-col border-r border-[#1F1F1F]">
+        {/* Top Bar */}
+        <div className="h-20 px-6 flex items-center justify-between">
+          <h1 className="text-xl font-bold tracking-tight">Create Workflow</h1>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleSave} 
+              disabled={saving}
+              className="px-4 py-1.5 rounded-lg border border-gray-700 text-sm font-medium hover:bg-gray-900 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : savedId ? <Check className="w-3 h-3 text-emerald-400" /> : null}
+              Save
+            </button>
+            <button 
+              onClick={handlePublish}
+              disabled={publishing}
+              className="px-4 py-1.5 rounded-lg bg-[#a855f7] hover:bg-[#9333ea] text-white text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {publishing ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+              Publish
+            </button>
           </div>
         </div>
 
-        {/* SECTION 1: ARCHITECTURE */}
-        <div className="space-y-4">
-           <div className="flex items-center gap-3 pl-1">
-              <div className="w-6 h-6 rounded-lg bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center text-[10px] font-bold text-[#8B5CF6]">1</div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Agent Template</span>
-           </div>
-           
-           <div className="grid grid-cols-4 gap-4">
-              {[
-                { id: 'fast', label: 'Fast', desc: 'Single model, high speed', cost: 'Low Cost', icon: Zap },
-                { id: 'cascade', label: 'Cascade', desc: 'Relay architecture', cost: 'Recommended', icon: Layers, active: true },
-                { id: 'planner', label: 'Planner', desc: 'Plan & Execute pattern', cost: 'High Quality', icon: Activity },
-                { id: 'autonomous', label: 'Autonomous', desc: 'Full agency loop', cost: 'Experimental', icon: Bot },
-              ].map(t => (
-                <div key={t.id} className={`p-6 bg-[#0E0E0E] border rounded-[24px] cursor-pointer transition-all relative group ${t.active ? 'border-[#8B5CF6] bg-[#8B5CF6]/[0.02] shadow-lg shadow-[#8B5CF6]/5' : 'border-[#1A1A1A] hover:border-[#333]'}`}>
-                  <div className="flex items-start justify-between mb-5">
-                    <div className={`p-2.5 rounded-xl ${t.active ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' : 'bg-[#161616] text-gray-600'}`}>
-                      <t.icon className="w-5 h-5" />
-                    </div>
-                    {t.active && <CheckCircle2 className="w-4 h-4 text-[#8B5CF6]" />}
-                  </div>
-                  <h4 className="text-sm font-bold text-white mb-1.5">{t.label}</h4>
-                  <p className="text-[10px] text-gray-500 mb-4 leading-relaxed font-medium">{t.desc}</p>
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${t.active ? 'bg-[#8B5CF6]/20 text-[#A78BFA]' : 'bg-[#1A1A1A] text-gray-600'}`}>
-                    {t.cost}
-                  </span>
+        {/* Status Message */}
+        {statusMsg && (
+          <div className="mx-6 mb-2 px-3 py-2 rounded-lg bg-[#1A1A2E] border border-[#8B5CF6]/30 text-xs text-[#A78BFA] font-mono">
+            {statusMsg}
+          </div>
+        )}
+
+        {/* Scrollable Config Sections */}
+        <div className="flex-1 overflow-y-auto px-6 pb-8 space-y-6 custom-scrollbar">
+          
+          {/* Workflow Name */}
+          <div className="space-y-2">
+            <div className="text-xs text-gray-400">Workflow Name</div>
+            <input 
+              type="text"
+              className="w-full bg-[#0f1117] border border-transparent rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
+              value={workflowName}
+              onChange={(e) => setWorkflowName(e.target.value)}
+              placeholder="e.g. HR Q&A Agent"
+            />
+          </div>
+
+          {/* Model Section */}
+          <div className="space-y-2">
+            <div className="text-xs text-gray-400">Model</div>
+            <div className="relative">
+              <select 
+                className="w-full appearance-none bg-[#0a0a0c] border border-gray-300 rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-white transition-colors"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+              >
+                {availableModels.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+                {availableModels.length === 0 && <option value="">Loading...</option>}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Instructions Section */}
+          <div className="space-y-2">
+            <div className="text-xs text-gray-400">Instructions</div>
+            <div className="relative">
+              <textarea 
+                className="w-full h-32 bg-[#0f1117] border border-transparent rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-gray-600 resize-none"
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                placeholder="You are a helpful assistant..."
+              />
+              <div className="absolute bottom-2 right-3 text-[10px] text-gray-500">
+                {instructions.length} chars
+              </div>
+            </div>
+          </div>
+
+          {/* Knowledge Section */}
+          <div className="space-y-2">
+            <div className="text-xs text-gray-400">Knowledge</div>
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <select 
+                  className="w-full appearance-none bg-[#0f1117] border border-transparent rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
+                  value={knowledgeType}
+                  onChange={(e) => {
+                    setKnowledgeType(e.target.value);
+                    if (e.target.value === 'Grounded Project') {
+                      setKnowledgeSource('HR Index');
+                    } else {
+                      setKnowledgeSource('Image');
+                    }
+                  }}
+                >
+                  <option value="Grounded Project">Grounded Project</option>
+                  <option value="Vision">Vision</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+              <div className="relative flex-1">
+                <select 
+                  className="w-full appearance-none bg-[#0f1117] border border-transparent rounded-xl px-4 py-3 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
+                  value={knowledgeSource}
+                  onChange={(e) => setKnowledgeSource(e.target.value)}
+                >
+                  {knowledgeType === 'Grounded Project' ? (
+                    <>
+                      <option value="HR Index">HR Index</option>
+                      <option value="Sales">Sales</option>
+                      <option value="Finance">Finance</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Image">Image</option>
+                      <option value="Video Intelligence">Video Intelligence</option>
+                    </>
+                  )}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          {/* Tools Section */}
+          <div className="space-y-3">
+            <div className="text-xs text-gray-400">Tools</div>
+            <div className="flex flex-wrap gap-2">
+              {toolsActive.map(tool => (
+                <div key={tool} className="flex items-center gap-1.5 px-3 py-1 bg-[#a855f7] rounded-full text-xs font-medium text-white">
+                  <span>{tool}</span>
+                  <X 
+                    className="w-3 h-3 cursor-pointer hover:text-gray-200" 
+                    onClick={() => removeTool(tool)}
+                  />
                 </div>
               ))}
-           </div>
-        </div>
+            </div>
+            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-600 text-sm font-medium hover:bg-[#111115] transition-colors mt-2">
+              + Explore Tools
+            </button>
+          </div>
 
-        {/* SECTION 2: MODEL ASSIGNMENT - 3 Cards */}
-        <div className="space-y-4">
-           <div className="flex items-center gap-3 pl-1">
-              <div className="w-6 h-6 rounded-lg bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center text-[10px] font-bold text-[#8B5CF6]">2</div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Model Assignment</span>
-           </div>
-
-           <div className="grid grid-cols-3 gap-5">
-              {[
-                { role: 'Planner / Router', model: 'Qwen 7B Instruct', icon: Code2, color: 'text-orange-400', bg: 'bg-orange-500/10' },
-                { role: 'Worker Models (Parallel)', model: 'Qwen3 3B (A27B)', icon: Box, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-                { role: 'Final Synthesis', model: 'Mistral 7B Instruct', icon: Layers, color: 'text-blue-400', bg: 'bg-blue-500/10' }
-              ].map((item, idx) => (
-                <div key={idx} className="p-6 bg-[#0E0E0E] border border-[#1A1A1A] rounded-[24px] space-y-5">
-                   <h4 className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{item.role}</h4>
-                   <div className="flex items-center justify-between p-3.5 bg-[#141414] border border-[#1F1F1F] rounded-2xl cursor-pointer hover:border-[#333] transition-all group">
-                      <div className="flex items-center gap-3">
-                         <div className={`p-2 rounded-lg ${item.bg}`}>
-                            <item.icon className={`w-4 h-4 ${item.color}`} />
-                         </div>
-                         <span className="text-xs font-bold text-white tracking-tight">{item.model}</span>
-                      </div>
-                      <ChevronDown className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400" />
-                   </div>
-                   <div className="flex items-center gap-5 pt-1">
-                      <div className="flex items-center gap-1.5"><FastForward className="w-3.5 h-3.5 text-yellow-500/80" /><span className="text-[9px] font-bold text-gray-500">SPEED: ULTRA</span></div>
-                      <div className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-emerald-500/80" /><span className="text-[9px] font-bold text-gray-500">VRAM: ~14GB</span></div>
-                   </div>
-                </div>
-              ))}
-           </div>
-        </div>
-
-        {/* PIPELINE PREVIEW VISUALIZER */}
-        <div className="p-8 bg-[#0B0B0B] border border-[#1F1F1F] rounded-[32px] overflow-hidden relative">
-           <div className="absolute top-0 left-0 w-1.5 h-full bg-[#8B5CF6]/40" />
-           <div className="flex items-center justify-between mb-10 px-2">
-              <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Pipeline Preview</span>
+          {/* Published Endpoint Info */}
+          {publishedEndpoint && (
+            <div className="p-4 bg-[#0B1D0B] border border-emerald-500/30 rounded-xl space-y-2">
               <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                 <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Active Architecture</span>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Published</span>
               </div>
-           </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#8B5CF6]/20 text-[#A78BFA]">POST</span>
+                <code className="text-xs text-gray-300 font-mono">{API_BASE}{publishedEndpoint}</code>
+              </div>
+            </div>
+          )}
 
-           <div className="flex items-center justify-between px-10 relative">
-              {/* Connector Line */}
-              <div className="absolute top-1/2 left-[15%] right-[15%] h-[1px] bg-gradient-to-r from-transparent via-[#333] to-transparent -translate-y-full px-20" />
-              
-              <div className="flex flex-col items-center gap-4 z-10">
-                 <div className="w-14 h-14 rounded-2xl bg-[#141414] border border-[#1F1F1F] flex items-center justify-center shadow-xl"><MessageSquare className="w-6 h-6 text-gray-600" /></div>
-                 <span className="text-[10px] font-black text-gray-600 uppercase tracking-tighter">Task</span>
-              </div>
-              
-              <div className="flex flex-col items-center gap-4 z-10">
-                 <div className="w-14 h-14 rounded-2xl bg-[#141414] border border-[#8B5CF6]/30 flex items-center justify-center shadow-xl shadow-[#8B5CF6]/5"><BrainCircuit className="w-6 h-6 text-[#8B5CF6]" /></div>
-                 <span className="text-[10px] font-black text-white uppercase tracking-tighter">Router</span>
-              </div>
+        </div>
+      </div>
 
-              <div className="flex items-center gap-3 py-3 px-6 bg-[#141414]/80 border border-[#222] rounded-[24px] z-10 shadow-2xl backdrop-blur-md">
-                 <div className="flex -space-x-2">
-                   {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full bg-[#8B5CF6]/10 border-2 border-[#0B0B0B] flex items-center justify-center"><Cpu className="w-4 h-4 text-[#8B5CF6]" /></div>)}
-                 </div>
-                 <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-gray-200">WORKERS</span>
-                    <span className="text-[9px] font-bold text-gray-500 uppercase">3x Parallel Nodes</span>
-                 </div>
-              </div>
-
-              <div className="flex flex-col items-center gap-4 z-10">
-                 <div className="w-14 h-14 rounded-2xl bg-[#141414] border border-orange-500/20 flex items-center justify-center shadow-xl"><Layers className="w-6 h-6 text-orange-500" /></div>
-                 <span className="text-[10px] font-black text-gray-600 uppercase tracking-tighter">Synthesize</span>
-              </div>
-
-              <div className="flex flex-col items-center gap-4 z-10">
-                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center justify-center shadow-xl"><CheckCircle2 className="w-6 h-6 text-emerald-500" /></div>
-                 <span className="text-[10px] font-black text-gray-600 uppercase tracking-tighter">Response</span>
-              </div>
-           </div>
+      {/* Right Panel - Chat Preview */}
+      <div className="flex-1 flex flex-col bg-black">
+        {/* Top Bar */}
+        <div className="h-20 px-8 flex items-center justify-between border-b border-[#1F1F1F]">
+          <div className="flex items-center gap-6">
+            <span className="text-sm font-medium text-gray-500">Preview</span>
+            <div className="flex items-center gap-5">
+              {['Chat', 'YAML', 'Code'].map(tab => (
+                <button 
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`text-sm font-medium transition-colors ${activeTab === tab ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button className="px-4 py-1.5 rounded-lg border border-gray-700 text-sm font-medium text-white hover:bg-[#1A1A1A] transition-colors">
+            Metrics
+          </button>
         </div>
 
-        {/* BOTTOM CONTROLS GRID */}
-        <div className="grid grid-cols-2 gap-8 pt-2 pb-10">
-           <div className="space-y-5">
-              <div className="flex items-center gap-3 pl-1">
-                 <div className="w-6 h-6 rounded-lg bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center text-[10px] font-bold text-[#8B5CF6]">3</div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Execution Settings</span>
-              </div>
-              <div className="p-7 bg-[#0E0E0E] border border-[#1A1A1A] rounded-[28px] space-y-6">
-                 <div className="grid grid-cols-2 gap-5">
-                    <div className="space-y-3">
-                       <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-0.5">Parallel Workers</label>
-                       <div className="relative">
-                          <select className="w-full bg-[#141414] border border-[#1F1F1F] rounded-xl px-4 py-3 text-[11px] font-bold text-gray-300 appearance-none focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]">
-                             <option>3 Modules</option>
-                             <option>5 Modules</option>
-                             <option>8 Modules</option>
-                          </select>
-                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
-                       </div>
+        {/* Chat Area */}
+        {activeTab === 'Chat' && (
+          <div className="flex-1 flex flex-col">
+            {/* Messages or Empty State */}
+            <div className="flex-1 overflow-y-auto p-8">
+              {chatMessages.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center">
+                  <h2 className="text-2xl font-semibold mb-3">{model}</h2>
+                  <p className="text-gray-500 text-sm mb-1">
+                    Use agent configuration to update the description and starter prompts
+                  </p>
+                  {!publishedEndpoint && (
+                    <p className="text-gray-600 text-xs mt-4">
+                      Publish the workflow to start chatting
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="max-w-3xl mx-auto space-y-6">
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
+                        msg.role === 'user' 
+                          ? 'bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 text-gray-200 rounded-tr-sm'
+                          : 'bg-[#1A1A1A] border border-[#222] text-gray-300 rounded-tl-sm'
+                      }`}>
+                        {msg.content}
+                      </div>
                     </div>
-                    <div className="space-y-3">
-                       <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-0.5">Max Iterations</label>
-                       <div className="relative">
-                          <select className="w-full bg-[#141414] border border-[#1F1F1F] rounded-xl px-4 py-3 text-[11px] font-bold text-gray-300 appearance-none focus:outline-none focus:ring-1 focus:ring-[#8B5CF6]">
-                             <option>10 Steps</option>
-                             <option>20 Steps</option>
-                             <option>Infinite Loop</option>
-                          </select>
-                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
-                       </div>
+                  ))}
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-[#1A1A1A] border border-[#222] text-gray-500 text-sm px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Thinking...
+                      </div>
                     </div>
-                 </div>
-              </div>
-           </div>
+                  )}
+                </div>
+              )}
+            </div>
 
-           <div className="space-y-5">
-              <div className="flex items-center gap-3 pl-1">
-                 <div className="w-6 h-6 rounded-lg bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center text-[10px] font-bold text-[#8B5CF6]">4</div>
-                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Knowledge Ingestion</span>
+            {/* Bottom Chat Input */}
+            <div className="p-6 flex flex-col items-center">
+              <div className="w-full max-w-3xl relative">
+                <input 
+                  type="text" 
+                  placeholder={publishedEndpoint ? "Message the agent..." : "Publish workflow to chat..."}
+                  disabled={!publishedEndpoint}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleChatSend()}
+                  className="w-full bg-[#0f1117] border border-transparent rounded-xl px-4 py-3.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-600 disabled:opacity-50"
+                />
               </div>
-              <div className="p-7 bg-[#0E0E0E] border border-[#1A1A1A] rounded-[28px] h-full space-y-6">
-                 <div className="grid grid-cols-2 gap-5">
-                    <div className="space-y-2.5">
-                       <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest pl-0.5">Project</span>
-                       <div className="flex items-center justify-between px-4 py-3 bg-[#141414] border border-[#1F1F1F] rounded-xl">
-                          <span className="text-[11px] font-bold text-white">E-commerce API</span>
-                          <ChevronDown className="w-3.5 h-3.5 text-gray-700" />
-                       </div>
-                    </div>
-                 </div>
+              <div className="mt-3 text-xs text-gray-600">
+                AI-generated content may be incorrect
               </div>
-           </div>
-        </div>
+            </div>
+          </div>
+        )}
+
+        {/* YAML Tab */}
+        {activeTab === 'YAML' && (
+          <div className="flex-1 overflow-y-auto p-8">
+            <pre className="bg-[#0f1117] border border-[#222] rounded-xl p-6 text-sm text-gray-300 font-mono whitespace-pre-wrap">
+{`# Workflow Configuration
+name: "${workflowName || `${model} Workflow`}"
+model: "${model}"
+instructions: |
+  ${instructions || '(none)'}
+knowledge:
+  type: "${knowledgeType}"
+  source: "${knowledgeSource}"
+tools:
+${toolsActive.map(t => `  - "${t}"`).join('\n')}
+${publishedEndpoint ? `\n# Published Endpoint\nendpoint: "${API_BASE}${publishedEndpoint}"` : '# Status: Draft (not published yet)'}
+`}
+            </pre>
+          </div>
+        )}
+
+        {/* Code Tab */}
+        {activeTab === 'Code' && (
+          <div className="flex-1 overflow-y-auto p-8">
+            <pre className="bg-[#0f1117] border border-[#222] rounded-xl p-6 text-sm text-gray-300 font-mono whitespace-pre-wrap">
+{`import requests
+
+# Invoke the workflow
+response = requests.post(
+    "${API_BASE}${publishedEndpoint || `/api/workflows/<workflow_id>/invoke`}",
+    json={"message": "Your question here"},
+    headers={"Content-Type": "application/json"}
+)
+
+print(response.json()["response"])
+`}
+            </pre>
+          </div>
+        )}
       </div>
     </div>
   );

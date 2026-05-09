@@ -39,6 +39,8 @@ from api.routers import (
     transformations,
     vision,
     genui_chat,
+    workflows,
+    monitor,
 )
 from api.routers import commands as commands_router
 from open_notebook.database.async_migrate import AsyncMigrationManager
@@ -321,6 +323,8 @@ app.include_router(genui_chat.router, prefix="/api/genui", tags=["GenUI"])
 app.include_router(catalog.router, prefix="/api/catalog", tags=["catalog"])
 app.include_router(deployments.router, prefix="/api/deployments", tags=["deployments"])
 app.include_router(vision.router, prefix="/api/vision", tags=["vision"])
+app.include_router(workflows.router, prefix="/api/workflows", tags=["workflows"])
+app.include_router(monitor.router, prefix="/api/monitor", tags=["monitor"])
 
 
 @app.get("/")

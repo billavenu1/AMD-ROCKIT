@@ -1,0 +1,44 @@
+[
+  {
+    "workflow_id": "wf_3a111c5c",
+    "name": "gemini-3-flash-preview Workflow",
+    "status": "running",
+    "endpoint": "/api/workflows/wf_3a111c5c/invoke",
+    "created_at": "2026-05-06T19:51:39.469923+00:00",
+    "published_at": "2026-05-06T19:51:39.495775+00:00",
+    "config": {
+      "model": "gemini-3-flash-preview",
+      "instructions": "",
+      "knowledge": {
+        "type": "Vision",
+        "source": "Video Intelligence"
+      },
+      "tools": []
+    },
+    "metrics": {
+      "total_invocations": 1,
+      "avg_latency_ms": 2240.0
+    }
+  },
+  {
+    "workflow_id": "wf_3809baa7",
+    "name": "Image",
+    "status": "running",
+    "endpoint": "/api/workflows/wf_3809baa7/invoke",
+    "created_at": "2026-05-06T20:01:50.494450+00:00",
+    "published_at": "2026-05-06T20:01:50.511809+00:00",
+    "config": {
+      "model": "gemini-3-flash-preview",
+      "instructions": "",
+      "knowledge": {
+        "type": "Vision",
+        "source": "Image"
+      },
+      "tools": []
+    },
+    "metrics": {
+      "total_invocations": 1,
+      "avg_latency_ms": 943.4
+    }
+  }
+]

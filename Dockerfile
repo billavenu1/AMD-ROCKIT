@@ -4,18 +4,16 @@ FROM python:3.12-slim-bookworm AS builder
 # Install uv using the official method
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install system dependencies required for building certain Python packages
-# Add Node.js 20.x LTS for building frontend
-# NOTE: gcc/g++/make removed - uv should download pre-built wheels. Add back if build fails.
-# NOTE: gcc/g++/make required for some python dependencies
+# Install system dependencies and bun
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    unzip \
     build-essential \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    ca-certificates \
+    && curl -fsSL https://bun.sh/install | bash \
     && rm -rf /var/lib/apt/lists/*
 
-# Set build optimization environment variables
+ENV PATH="/root/.bun/bin:${PATH}"
 ENV MAKEFLAGS="-j$(nproc)"
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -26,16 +24,14 @@ ENV UV_LINK_MODE=copy
 WORKDIR /app
 
 # Copy dependency files and minimal package structure first for better layer caching
-COPY pyproject.toml uv.lock ./
+COPY req.txt pyproject.toml ./
 COPY open_notebook/__init__.py ./open_notebook/__init__.py
 
-# Install dependencies with optimizations (this layer will be cached unless dependencies change)
-RUN uv sync --frozen --no-dev
+# Install dependencies with uv and req.txt
+RUN uv venv .venv
+RUN uv pip install --python .venv -r req.txt
 
 # Pre-download tiktoken encoding so the app works offline (issue #264).
-# /app/tiktoken-cache is intentionally outside /app/data/ so that volume mounts
-# of /app/data (for user data persistence) do not hide the pre-baked encoding.
-# config.py reads TIKTOKEN_CACHE_DIR from the environment to pick up this path.
 ENV TIKTOKEN_CACHE_DIR=/app/tiktoken-cache
 RUN mkdir -p /app/tiktoken-cache && \
     .venv/bin/python -c "import tiktoken; tiktoken.get_encoding('o200k_base')"
@@ -43,14 +39,10 @@ RUN mkdir -p /app/tiktoken-cache && \
 # Copy the rest of the application code
 COPY . /app
 
-# Install frontend dependencies and build
-WORKDIR /app/frontend
-ARG NPM_REGISTRY=https://registry.npmjs.org/
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm config set registry ${NPM_REGISTRY}
-RUN npm ci
-COPY frontend/ ./
-RUN npm run build
+# Install frontend dependencies and build using bun
+WORKDIR /app/aria-frontend
+RUN bun install
+RUN bun run build
 
 # Return to app root
 WORKDIR /app
@@ -58,15 +50,17 @@ WORKDIR /app
 # Runtime stage
 FROM python:3.12-slim-bookworm AS runtime
 
-# Install only runtime system dependencies (no build tools)
-# Add Node.js 20.x LTS for running frontend
+# Install runtime dependencies and bun
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     ffmpeg \
     supervisor \
     curl \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
+    unzip \
+    ca-certificates \
+    && curl -fsSL https://bun.sh/install | bash \
     && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.bun/bin:${PATH}"
 
 # Install uv using the official method
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -80,23 +74,20 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy the source code (the rest)
 COPY . /app
 
-# Copy pre-downloaded tiktoken encoding from builder (outside /data/ — volume-mount safe)
+# Copy pre-downloaded tiktoken encoding from builder
 COPY --from=builder /app/tiktoken-cache /app/tiktoken-cache
 
 # Ensure uv uses the existing venv without attempting network operations
 ENV UV_NO_SYNC=1
 ENV VIRTUAL_ENV=/app/.venv
-# Point the app at the pre-baked tiktoken encoding (see open_notebook/config.py)
+ENV PATH="/app/.venv/bin:$PATH"
 ENV TIKTOKEN_CACHE_DIR=/app/tiktoken-cache
 
-# Bind Next.js to all interfaces (required for Docker networking and reverse proxies)
+# Bind to all interfaces (required for Docker networking and reverse proxies)
 ENV HOSTNAME=0.0.0.0
 
 # Copy built frontend from builder stage
-COPY --from=builder /app/frontend/.next/standalone /app/frontend/
-COPY --from=builder /app/frontend/.next/static /app/frontend/.next/static
-COPY --from=builder /app/frontend/public /app/frontend/public
-COPY --from=builder /app/frontend/start-server.js /app/frontend/start-server.js
+COPY --from=builder /app/aria-frontend/dist /app/aria-frontend/dist
 
 # Expose ports for Frontend and API
 EXPOSE 8502 5055
@@ -112,15 +103,5 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Create log directories
 RUN mkdir -p /var/log/supervisor
-
-# Runtime API URL Configuration
-# The API_URL environment variable can be set at container runtime to configure
-# where the frontend should connect to the API. This allows the same Docker image
-# to work in different deployment scenarios without rebuilding.
-#
-# If not set, the system will auto-detect based on incoming requests.
-# Set API_URL when using reverse proxies or custom domains.
-#
-# Example: docker run -e API_URL=https://your-domain.com/api ...
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
