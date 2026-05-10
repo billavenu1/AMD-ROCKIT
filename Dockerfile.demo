@@ -1,0 +1,88 @@
+# ============================================================================
+# ROCKIT Demo Deployment — Single-container, CPU-only, all-in-one image
+# Bundles: SurrealDB + FastAPI + Vite Frontend + Elyra (read-only) + demo data
+# ============================================================================
+
+# ── Stage 1: Build the Vite frontend ──────────────────────────────
+FROM oven/bun:latest AS frontend-builder
+WORKDIR /app/aria-frontend
+COPY aria-frontend/package.json aria-frontend/bun.lockb ./
+RUN bun install --frozen-lockfile || bun install
+COPY aria-frontend/ ./
+RUN bun run build
+
+# ── Stage 2: Grab the SurrealDB v2 binary ─────────────────────────
+FROM surrealdb/surrealdb:v2 AS surreal-binary
+
+# ── Stage 3: Python runtime (final image) ─────────────────────────
+FROM python:3.12-slim-bookworm AS runtime
+
+# Install system deps: ffmpeg (media), supervisor (process mgr), curl (healthcheck)
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    supervisor \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (fast Python package manager)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Install SurrealDB binary
+COPY --from=surreal-binary /surreal /usr/local/bin/surreal
+
+WORKDIR /app
+
+# ── Python dependencies (cached layer) ────────────────────────────
+COPY req.txt pyproject.toml ./
+COPY open_notebook/__init__.py ./open_notebook/__init__.py
+RUN uv venv .venv
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+RUN uv pip install -r req.txt
+
+# Pre-download tiktoken encoding for offline usage
+ENV TIKTOKEN_CACHE_DIR=/app/tiktoken-cache
+RUN mkdir -p /app/tiktoken-cache && \
+    python -c "import tiktoken; tiktoken.get_encoding('o200k_base')"
+
+# ── Copy entire application source ────────────────────────────────
+COPY . /app
+
+# ── Copy built frontend ───────────────────────────────────────────
+COPY --from=frontend-builder /app/aria-frontend/dist /app/aria-frontend/dist
+
+# ── Bake in the pre-populated demo data ────────────────────────────
+# surreal_data/ → SurrealDB database with demo projects/sources
+# elyra_work/   → HTML-converted read-only notebooks
+# elyra_data/   → Elyra/Jupyter runtime state
+# data/         → available_models.json, uploads, sqlite checkpoints
+
+# ── Setup directories ─────────────────────────────────────────────
+RUN mkdir -p /app/data /mydata /var/log/supervisor
+
+# Make scripts executable
+RUN chmod +x /app/scripts/wait-for-api.sh 2>/dev/null || true
+
+# ── Supervisord config ────────────────────────────────────────────
+COPY supervisord.demo.conf /etc/supervisor/conf.d/supervisord.conf
+
+# ── Environment ───────────────────────────────────────────────────
+ENV HOSTNAME=0.0.0.0
+ENV DEMO_MODE=true
+ENV USE_GPU=false
+# Database (internal — SurrealDB runs inside same container)
+ENV SURREAL_URL=ws://127.0.0.1:8000/rpc
+ENV SURREAL_USER=root
+ENV SURREAL_PASSWORD=root
+ENV SURREAL_NAMESPACE=open_notebook
+ENV SURREAL_DATABASE=open_notebook
+ENV OPEN_NOTEBOOK_ENCRYPTION_KEY=aria-secret-key-6631-amd-hackathon
+# Models
+ENV DEFAULT_CHAT_MODEL=gemini-3.1-flash-lite-preview
+ENV DEFAULT_EMBEDDING_MODEL=gemini-embedding-2
+ENV EXTRA_MODELS=gemini-3-flash-preview,gemini-3.1-flash-lite-preview,gemini-3.1-pro-preview
+
+# Expose: 8502 (frontend), 5055 (API), 8888 (Elyra)
+EXPOSE 8502 5055 8888
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
