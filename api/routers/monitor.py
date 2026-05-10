@@ -26,7 +26,26 @@ async def vllm_stats():
     When USE_GPU=true, queries actual deployments for their status.
     """
     if not is_gpu_enabled():
-        return []
+        return [
+            {
+                "name": "Qwen/Qwen3.6-35B-A3B",
+                "deployment_id": "mock-qwen-35b",
+                "status": "up",
+                "endpoint": "http://localhost:8001/v1",
+                "vram_pct": 78.4,
+                "active": 3,
+                "queued": 1,
+            },
+            {
+                "name": "qwen3-vl-embedding-2b",
+                "deployment_id": "mock-qwen-embed",
+                "status": "up",
+                "endpoint": "http://localhost:8001/v1",
+                "vram_pct": 12.1,
+                "active": 1,
+                "queued": 0,
+            }
+        ]
 
     try:
         from api.deployment_manager import deployment_manager

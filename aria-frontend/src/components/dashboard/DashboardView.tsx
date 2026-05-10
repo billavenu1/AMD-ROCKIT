@@ -7,6 +7,7 @@ export const DashboardView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'vllm' | 'system'>('vllm');
   const [vllmStats, setVllmStats] = useState<any[]>([]);
   const [systemStats, setSystemStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchVllm = async () => {
@@ -19,6 +20,8 @@ export const DashboardView: React.FC = () => {
         setVllmStats(data);
       } catch (e) {
         console.error("Failed to fetch vLLM stats", e);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -32,9 +35,12 @@ export const DashboardView: React.FC = () => {
         setSystemStats(data);
       } catch (e) {
         console.error("Failed to fetch System stats", e);
+      } finally {
+        setIsLoading(false);
       }
     };
 
+    setIsLoading(true);
     // Initial fetch
     if (activeTab === 'vllm') {
       fetchVllm();
@@ -60,7 +66,7 @@ export const DashboardView: React.FC = () => {
       <div className="p-8 pb-4 border-b border-[#1A1A1A]">
         <div className="flex items-center gap-3 mb-6">
           <Activity className="w-6 h-6 text-[#A78BFA]" />
-          <h1 className="text-2xl font-bold text-white">ARIA Monitor</h1>
+          <h1 className="text-2xl font-bold text-white">ROCKIT Monitor</h1>
         </div>
 
         {/* Tabs */}
@@ -92,8 +98,10 @@ export const DashboardView: React.FC = () => {
       <div className="flex-1 p-8 overflow-y-auto">
         {activeTab === 'vllm' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vllmStats.length === 0 ? (
+            {isLoading ? (
               <div className="text-gray-500 text-sm">Loading vLLM stats...</div>
+            ) : vllmStats.length === 0 ? (
+              <div className="text-gray-500 text-sm">No vLLM models currently active.</div>
             ) : (
               vllmStats.map((model, idx) => (
                 <div key={idx} className="bg-[#121212] border border-[#222] rounded-2xl p-6">
@@ -137,8 +145,10 @@ export const DashboardView: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {!systemStats ? (
+            {isLoading && !systemStats ? (
               <div className="text-gray-500 text-sm">Loading System stats...</div>
+            ) : !systemStats ? (
+              <div className="text-gray-500 text-sm">System stats unavailable.</div>
             ) : (
               <>
                 {/* CPU */}

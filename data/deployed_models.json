@@ -31,5 +31,27 @@
       "quantization": "4-bit",
       "target_gpu": "MI300X"
     }
+  },
+  {
+    "deployment_id": "dep-ddca478a",
+    "model_id": "qwen-27b",
+    "status": "Starting",
+    "endpoint": "/v1/chat/completions",
+    "api_key": "aria-41b604ec347548a38e8dce608dc1c9f1",
+    "config": {
+      "quantization": "8-bit",
+      "target_gpu": "MI300X"
+    }
+  },
+  {
+    "deployment_id": "dep-069feee5",
+    "model_id": "qwen-27b",
+    "status": "Starting",
+    "endpoint": "/v1/chat/completions",
+    "api_key": "aria-451f8c498ca14049baf63ffc3cea0eae",
+    "config": {
+      "quantization": "4-bit",
+      "target_gpu": "MI300X"
+    }
   }
 ]

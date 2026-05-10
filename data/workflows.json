@@ -40,5 +40,47 @@
       "total_invocations": 1,
       "avg_latency_ms": 943.4
     }
+  },
+  {
+    "workflow_id": "wf_b131ed25",
+    "name": "Forest agent ",
+    "status": "running",
+    "endpoint": "/api/workflows/wf_b131ed25/invoke",
+    "created_at": "2026-05-09T19:48:32.984316+00:00",
+    "published_at": "2026-05-09T19:48:33.014892+00:00",
+    "config": {
+      "model": "gemini-3-flash-preview",
+      "instructions": "",
+      "knowledge": {
+        "type": "Vision",
+        "source": "Video Intelligence"
+      },
+      "tools": []
+    },
+    "metrics": {
+      "total_invocations": 1,
+      "avg_latency_ms": 702.6
+    }
+  },
+  {
+    "workflow_id": "wf_d363b485",
+    "name": "Image",
+    "status": "running",
+    "endpoint": "/api/workflows/wf_d363b485/invoke",
+    "created_at": "2026-05-10T06:51:14.951029+00:00",
+    "published_at": "2026-05-10T06:51:14.993607+00:00",
+    "config": {
+      "model": "gemini-3-flash-preview",
+      "instructions": "",
+      "knowledge": {
+        "type": "Vision",
+        "source": "Image"
+      },
+      "tools": []
+    },
+    "metrics": {
+      "total_invocations": 4,
+      "avg_latency_ms": 1142.6
+    }
   }
 ]

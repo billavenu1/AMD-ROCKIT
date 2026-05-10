@@ -143,12 +143,12 @@ export const ActiveDeploymentsView: React.FC = () => {
           </button>
         </div>
 
-        {!gpuEnabled && (
+        {/* {!gpuEnabled && (
           <div className="mx-8 mb-4 flex items-center gap-3 bg-[#FBBF24]/10 border border-[#FBBF24]/20 rounded-xl px-4 py-3">
             <AlertTriangle className="w-5 h-5 text-[#FBBF24] shrink-0" />
             <span className="text-sm text-[#FBBF24]/90">GPU mode disabled. Set <code className="bg-black/30 px-1.5 py-0.5 rounded text-xs">USE_GPU=true</code> in .env to enable vLLM model deployment.</span>
           </div>
-        )}
+        )} */}
 
         <div className="flex-1 p-8 pt-0 overflow-y-auto space-y-6">
           {/* vLLM Model Deployments */}

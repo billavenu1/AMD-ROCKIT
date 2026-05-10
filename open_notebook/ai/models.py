@@ -138,16 +138,22 @@ class ModelManager:
         if not model_id:
             return None
 
-        try:
-            model: Model = await Model.get(model_id)
-        except Exception:
-            if not model_id.startswith("model:"):
-                direct_model = await self._get_env_model_by_name(
-                    model_id, "language", **kwargs
-                )
-                if direct_model:
-                    return direct_model
-            raise ConfigurationError(f"Model with ID {model_id} not found")
+        model: Optional[Model] = None
+
+        if model_id.startswith("model:"):
+            try:
+                model = await Model.get(model_id)
+            except Exception:
+                raise ConfigurationError(f"Model with ID {model_id} not found in database")
+        
+        if not model:
+            # Fall back to env var name if not a database model
+            direct_model = await self._get_env_model_by_name(
+                model_id, "language", **kwargs
+            )
+            if direct_model:
+                return direct_model
+            raise ConfigurationError(f"Model '{model_id}' not found in DB and could not be inferred from env")
 
         if not model.type or model.type not in [
             "language",

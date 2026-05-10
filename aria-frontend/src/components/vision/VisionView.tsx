@@ -314,7 +314,7 @@ export const VisionView: React.FC = () => {
                 </div>
                 <div className="bg-[#141414] border border-[#222] text-gray-400 text-sm px-4 py-3 rounded-2xl rounded-tl-sm flex items-center gap-2">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Analyzing with gemini-embedding-2...
+                  Analyzing with qwen3-vl-embedding-2b...
                 </div>
               </div>
             )}

@@ -55,10 +55,10 @@ export const NavBar: React.FC<NavBarProps> = ({
         {/* Logo */}
         <div className="flex items-center gap-3 px-1 ml-1.5 h-8 overflow-hidden">
           <div className={`w-7 h-7 bg-white rounded flex-shrink-0 flex items-center justify-center transition-all ${isNavHovered ? 'scale-100' : 'scale-90 opacity-80'}`}>
-            <span className="text-black font-extrabold text-lg uppercase italic leading-none">A</span>
+            <span className="text-black font-extrabold text-lg uppercase italic leading-none">R</span>
           </div>
           {isNavHovered && (
-             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-white font-bold tracking-tighter text-lg">ARIA</motion.span>
+             <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-white font-bold tracking-tighter text-lg">ROCKIT</motion.span>
           )}
         </div>
 

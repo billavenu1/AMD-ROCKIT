@@ -1,0 +1,7 @@
+services:
+  open_notebook:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    environment:
+      - USE_GPU=false

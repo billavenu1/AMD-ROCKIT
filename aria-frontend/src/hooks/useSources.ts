@@ -25,7 +25,7 @@ export function useUploadSource(notebookId: string | null) {
       }
       formData.append('file', file);
       formData.append('title', file.name);
-      formData.append('async_processing', 'true');
+      formData.append('async_processing', 'false');
       const response = await api.post('/sources', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -54,7 +54,7 @@ export function useUploadMultipleSources(notebookId: string | null) {
         }
         formData.append('file', file);
         formData.append('title', file.name);
-        formData.append('async_processing', 'true');
+        formData.append('async_processing', 'false');
         const response = await api.post('/sources', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
@@ -82,7 +82,7 @@ export function useAddLinkSource(notebookId: string | null) {
       }
       formData.append('url', url);
       formData.append('title', url);
-      formData.append('async_processing', 'true');
+      formData.append('async_processing', 'false');
       const response = await api.post('/sources', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });

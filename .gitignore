@@ -46,3 +46,4 @@ htmlcov/
 .ipynb_checkpoints/
 *.pipeline
 !elyra_work/test-folder/test-pipeline.pipeline # Keep your test pipeline if you want to share it
+HF_Space_hipVS/

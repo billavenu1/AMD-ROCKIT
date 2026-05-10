@@ -6,7 +6,7 @@ interface ChunkData {
   source_title?: string;
 }
 
-export function ChunkHoverCard({ chunkId, children }: { chunkId: string, children: React.ReactNode }) {
+export function ChunkHoverCard({ chunkId, type = 'chunk', children }: { chunkId: string, type?: string, children: React.ReactNode }) {
   const [isHovered, setIsHovered] = useState(false);
   const [chunkData, setChunkData] = useState<ChunkData | null>(null);
   const [isTop, setIsTop] = useState(false);
@@ -26,19 +26,56 @@ export function ChunkHoverCard({ chunkId, children }: { chunkId: string, childre
 
   useEffect(() => {
     if (isHovered && !chunkData) {
-      // Fetch chunk data when hovered, using the Vite proxy route
+      // Helper to map a source API response into ChunkData shape
+      const mapSourceToChunk = (data: any): ChunkData => {
+        const fullText = data.full_text || '';
+        const previewText = fullText
+          ? fullText.substring(0, 500) + (fullText.length > 500 ? '…' : '')
+          : 'Source is still processing or has no extractable text.';
+        return {
+          text_content: previewText,
+          image_paths: [],
+          source_title: data.title || 'Document'
+        };
+      };
+
+      // Helper to map a chunk API response into ChunkData shape
+      const mapChunkToChunk = (data: any): ChunkData => ({
+        text_content: data.text_content || '',
+        image_paths: data.image_paths || [],
+        source_title: data.source_title
+      });
+
+      // Always try chunk endpoint first (IDs are most often chunk IDs with
+      // the source_chunk: prefix stripped by the chat graph). Fall back to
+      // the source endpoint if that 404s.
       fetch(`/api/sources/chunks/${chunkId}`)
-        .then(res => res.json())
-        .then(data => {
-          console.log(`[Hover Bubble] Fetched Chunk:`, data.text_content);
-          if (data.image_paths && data.image_paths.length > 0) {
-            console.log(`[Hover Bubble] Images:`, data.image_paths);
-          }
-          setChunkData(data);
+        .then(res => {
+          if (res.ok) return res.json().then(data => {
+            console.log(`[Hover] Fetched chunk:`, data);
+            setChunkData(mapChunkToChunk(data));
+          });
+          // Chunk not found — try as a source
+          return fetch(`/api/sources/${chunkId}`)
+            .then(res2 => {
+              if (!res2.ok) throw new Error(`HTTP ${res2.status}`);
+              return res2.json();
+            })
+            .then(data => {
+              console.log(`[Hover] Fetched source:`, data);
+              setChunkData(mapSourceToChunk(data));
+            });
         })
-        .catch(err => console.error("Error fetching chunk:", err));
+        .catch(err => {
+          console.warn(`[Hover] Could not fetch content for ${type}:${chunkId}`, err);
+          setChunkData({
+            text_content: 'Content no longer available.',
+            image_paths: [],
+            source_title: 'Unavailable'
+          });
+        });
     }
-  }, [isHovered, chunkId, chunkData]);
+  }, [isHovered, chunkId, chunkData, type]);
 
   // Handle positioning
   useEffect(() => {

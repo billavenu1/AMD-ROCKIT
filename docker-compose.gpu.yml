@@ -1,0 +1,13 @@
+services:
+  open_notebook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - USE_GPU=true
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+    ipc: host

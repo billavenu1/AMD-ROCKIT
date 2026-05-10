@@ -174,7 +174,7 @@ export function convertSourceReferences(
  */
 export function convertReferencesToMarkdownLinks(text: string): string {
   // Step 1: Find ALL references using simple greedy pattern
-  const refPattern = /(source_insight|note|source):([a-zA-Z0-9_]+)/g
+  const refPattern = /(source_insight|note|source|chunk):([a-zA-Z0-9_]+)/g
   const references: Array<{ type: string; id: string; index: number; length: number }> = []
 
   let match
@@ -456,15 +456,15 @@ export function createCompactReferenceLinkComponent(
         </button>
       )
 
-      if (type === 'chunk') {
+      if (type === 'chunk' || type === 'source') {
         return (
-          <ChunkHoverCard chunkId={id}>
+          <ChunkHoverCard chunkId={id} type={type}>
             {buttonEl}
           </ChunkHoverCard>
         )
       }
 
-      // Placeholder generic hover card for sources, notes, insights
+      // Placeholder generic hover card for notes, insights
       return (
         <div className="relative inline-block group">
           {buttonEl}

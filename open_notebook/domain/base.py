@@ -122,6 +122,8 @@ class ObjectModel(BaseModel):
                 return target_class(**result[0])
             else:
                 raise NotFoundError(f"{table_name} with id {id} not found")
+        except (NotFoundError, InvalidInputError):
+            raise  # Let known exceptions bubble up without noisy logging
         except Exception as e:
             logger.error(f"Error fetching object with id {id}: {str(e)}")
             logger.exception(e)

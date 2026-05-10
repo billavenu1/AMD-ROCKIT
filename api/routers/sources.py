@@ -460,12 +460,12 @@ async def create_source(
                 )
 
         else:
-            # SYNC PATH: Execute synchronously using execute_command_sync
-            logger.info("Using sync processing path")
+            # SYNC PATH: Execute directly via source_graph (bypasses surreal-commands worker)
+            logger.info("Using sync processing path (direct graph invocation)")
 
             try:
-                # Import command modules to ensure they're registered
-                import commands.source_commands  # noqa: F401
+                from open_notebook.graphs.source import source_graph
+                from open_notebook.domain.transformation import Transformation as TransformationModel
 
                 # Derive title: explicit title > uploaded filename > fallback
                 source_title = source_data.title
@@ -483,56 +483,28 @@ async def create_source(
                 await source.save()
 
                 # Add source to notebooks immediately so it appears in the UI
-                # The source_graph will skip adding duplicates
                 for notebook_id in source_data.notebooks or []:
                     await source.add_to_notebook(notebook_id)
 
-                # Execute command synchronously
-                command_input = SourceProcessingInput(
-                    source_id=str(source.id),
-                    content_state=content_state,
-                    notebook_ids=source_data.notebooks,
-                    transformations=transformation_ids,
-                    embed=source_data.embed,
+                # Load transformation objects from IDs
+                transformations = []
+                for trans_id in transformation_ids:
+                    transformation = await TransformationModel.get(trans_id)
+                    if transformation:
+                        transformations.append(transformation)
+
+                # Invoke source_graph directly (same logic as process_source_command)
+                result = await source_graph.ainvoke(
+                    {
+                        "content_state": content_state,
+                        "notebook_ids": source_data.notebooks or [],
+                        "apply_transformations": transformations,
+                        "embed": source_data.embed,
+                        "source_id": str(source.id),
+                    }
                 )
 
-                # Run in thread pool to avoid blocking the event loop
-                # execute_command_sync uses asyncio.run() internally which can't
-                # be called from an already-running event loop (FastAPI)
-                result = await asyncio.to_thread(
-                    execute_command_sync,
-                    "open_notebook",  # app name
-                    "process_source",  # command name
-                    command_input.model_dump(),
-                    timeout=300,  # 5 minute timeout for sync processing
-                )
-
-                if not result.is_success():
-                    logger.error(f"Sync processing failed: {result.error_message}")
-                    # Clean up source record
-                    try:
-                        await source.delete()
-                    except Exception:
-                        pass
-                    # Clean up uploaded file if we created it
-                    if file_path and upload_file:
-                        try:
-                            os.unlink(file_path)
-                        except Exception:
-                            pass
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Processing failed: {result.error_message}",
-                    )
-
-                # Get the processed source
-                if not source.id:
-                    raise HTTPException(status_code=500, detail="Source ID is missing")
-                processed_source = await Source.get(source.id)
-                if not processed_source:
-                    raise HTTPException(
-                        status_code=500, detail="Processed source not found"
-                    )
+                processed_source = result["source"]
 
                 embedded_chunks = await processed_source.get_embedded_chunks()
                 return SourceResponse(
@@ -554,11 +526,16 @@ async def create_source(
                     embedded_chunks=embedded_chunks,
                     created=str(processed_source.created),
                     updated=str(processed_source.updated),
-                    # No command_id or status for sync processing (legacy behavior)
                 )
 
             except Exception as e:
                 logger.error(f"Sync processing failed: {e}")
+                # Clean up source record on failure
+                try:
+                    if source and source.id:
+                        await source.delete()
+                except Exception:
+                    pass
                 # Clean up uploaded file if we created it
                 if file_path and upload_file:
                     try:
@@ -645,7 +622,17 @@ def _is_source_file_available(source: Source) -> Optional[bool]:
 async def get_source(source_id: str):
     """Get a specific source by ID."""
     try:
-        source = await Source.get(source_id)
+        from open_notebook.exceptions import NotFoundError
+        
+        # Ensure correct table prefix (bare IDs come from hover-card references)
+        if not source_id.startswith("source:"):
+            source_id = f"source:{source_id}"
+
+        try:
+            source = await Source.get(source_id)
+        except NotFoundError:
+            raise HTTPException(status_code=404, detail="Source not found")
+
         if not source:
             raise HTTPException(status_code=404, detail="Source not found")
 
@@ -1066,20 +1053,27 @@ async def get_chunk(chunk_id: str):
     """Get details for a specific chunk including extracted images."""
     try:
         from open_notebook.domain.notebook import Source, SourceChunk
+        from open_notebook.exceptions import NotFoundError
 
         # Ensure correct table prefix
         full_chunk_id = f"source_chunk:{chunk_id}" if not chunk_id.startswith("source_chunk:") else chunk_id
 
-        chunk = await SourceChunk.get(full_chunk_id)
+        try:
+            chunk = await SourceChunk.get(full_chunk_id)
+        except NotFoundError:
+            raise HTTPException(status_code=404, detail="Chunk not found")
 
         if not chunk:
             raise HTTPException(status_code=404, detail="Chunk not found")
             
         chunk_data = chunk.model_dump()
         if "source_id" in chunk_data and chunk_data["source_id"]:
-            source = await Source.get(chunk_data["source_id"])
-            if source:
-                chunk_data["source_title"] = source.title
+            try:
+                source = await Source.get(chunk_data["source_id"])
+                if source:
+                    chunk_data["source_title"] = source.title
+            except Exception:
+                pass  # Source may have been deleted; chunk content is still valid
 
         return chunk_data
     except HTTPException:
