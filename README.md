@@ -1,3 +1,13 @@
+> [!CAUTION]
+> ## 🔒 Demo Deployment Branch
+> This branch is configured for **public demo deployment**. Everything is **read-only**:
+> - Source uploads, notebook creation/deletion are **blocked** via `DEMO_MODE=true`
+> - Elyra/Jupyter workspace is **read-only** (no code execution, no terminal access)
+> - Workflow endpoints are **redacted** in the UI
+> - All Elyra project files have been **converted to static HTML**
+>
+> To switch back to development mode, use the `main` branch.
+
 # ROCKIT
 
 **ROCKIT** is a robust multi-modal search, ingestion, and agentic intelligence application built around an advanced Next.js frontend, a FastAPI orchestration layer, and a SurrealDB graph engine, paired with isolated Vision Intelligence utilizing the Hugging Face `hipVS` ecosystem.

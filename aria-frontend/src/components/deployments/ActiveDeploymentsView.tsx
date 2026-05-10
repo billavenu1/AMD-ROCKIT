@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Copy, Trash2, Send, Network, Loader2, Cpu, Eye, Database, Volume2, Plus, AlertTriangle, Server } from 'lucide-react';
+import { X, Copy, Trash2, Send, Network, Loader2, Cpu, Eye, Database, Volume2, Plus, AlertTriangle, Server, ShieldAlert } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5055';
 
@@ -143,6 +143,12 @@ export const ActiveDeploymentsView: React.FC = () => {
           </button>
         </div>
 
+        {/* View-Only Demo Warning */}
+        <div className="mx-8 mb-4 flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+          <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
+          <span className="text-sm text-amber-300/90">This deployment dashboard is in <strong className="text-amber-200">View-Only</strong> mode. Endpoints are redacted for security.</span>
+        </div>
+
         {/* {!gpuEnabled && (
           <div className="mx-8 mb-4 flex items-center gap-3 bg-[#FBBF24]/10 border border-[#FBBF24]/20 rounded-xl px-4 py-3">
             <AlertTriangle className="w-5 h-5 text-[#FBBF24] shrink-0" />
@@ -175,7 +181,7 @@ export const ActiveDeploymentsView: React.FC = () => {
                         <td className="py-3 px-5"><div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${sc.dot}`} /><span className={`text-xs font-medium capitalize ${sc.text}`}>{dep.status}</span>
                         </div></td>
-                        <td className="py-3 px-5 text-xs text-gray-400 font-mono max-w-[180px] truncate">{dep.endpoint || '—'}</td>
+                        <td className="py-3 px-5 text-xs text-gray-400 font-mono max-w-[180px] truncate">{dep.endpoint ? `${dep.endpoint.split('/').slice(0, -1).join('/')}/[redacted]` : '—'}</td>
                         <td className="py-3 px-5 text-xs text-gray-500">{dep.config?.quantization || '—'} / {dep.config?.target_gpu || '—'}</td>
                         <td className="py-3 px-5 text-right">
                           <button onClick={() => handleUndeploy(dep.deployment_id)} className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"><Trash2 className="w-4 h-4" /></button>
@@ -213,11 +219,10 @@ export const ActiveDeploymentsView: React.FC = () => {
                       <td className="py-3 px-5"><div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${sc.dot}`} /><span className={`text-xs font-medium capitalize ${sc.text}`}>{wf.status}</span>
                       </div></td>
-                      <td className="py-3 px-5 text-xs text-gray-400 font-mono max-w-[180px] truncate">{wf.endpoint || '—'}</td>
+                      <td className="py-3 px-5 text-xs text-gray-400 font-mono max-w-[180px] truncate">{wf.endpoint ? `/api/workflows/[redacted]` : '—'}</td>
                       <td className="py-3 px-5 text-sm text-gray-300">{wf.metrics?.total_invocations ?? 0}</td>
                       <td className="py-3 px-5 text-right"><div className="flex items-center justify-end gap-2">
                         <button onClick={() => handleSelect(wf)} className="px-3 py-1 border border-[#8B5CF6]/30 text-[#A78BFA] hover:bg-[#8B5CF6]/10 rounded-lg text-xs font-medium transition-colors">View</button>
-                        <button onClick={() => handleDeleteWorkflow(wf.workflow_id)} className="p-1.5 text-gray-600 hover:text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div></td>
                     </tr>
                   );})}
@@ -252,10 +257,8 @@ export const ActiveDeploymentsView: React.FC = () => {
               {selected.endpoint && (<div className="space-y-3"><h3 className="text-sm font-bold text-white">Endpoint</h3>
                 <div className="bg-[#0A0A0A] border border-[#222] rounded-xl p-3 flex items-center justify-between">
                   <div><span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#8B5CF6]/20 text-[#A78BFA] mr-2">POST</span>
-                  <span className="text-xs text-gray-300 font-mono">{API_BASE}{selected.endpoint}</span></div>
-                  <button onClick={() => handleCopy(`${API_BASE}${selected.endpoint}`)} className="text-gray-500 hover:text-[#A78BFA] transition-colors p-1.5">
-                    {copied ? <Copy className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                  </button>
+                  <span className="text-xs text-gray-300 font-mono">{API_BASE}/api/workflows/[redacted]</span></div>
+                  <span className="text-[10px] text-gray-600 italic">redacted</span>
                 </div>
               </div>)}
               {selected.status === 'running' && (<div className="space-y-3 flex flex-col flex-1"><h3 className="text-sm font-bold text-white">Try it out</h3>

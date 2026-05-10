@@ -24,7 +24,7 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./elyra_work:/home/jovyan/work
+      - ./elyra_work:/home/jovyan/work:ro
       - ./elyra_data:/home/jovyan/.local/share/jupyter
       - ./jupyter_server_config.py:/home/jovyan/.jupyter/jupyter_server_config.py:ro
     working_dir: /home/jovyan/work

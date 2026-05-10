@@ -294,6 +294,15 @@ async def create_source(
     ),
 ):
     """Create a new source with support for both JSON and multipart form data."""
+    # ── Public Demo Lockdown ──────────────────────────────────────
+    # Block all source uploads/creation in demo mode
+    import os
+    if os.environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"):
+        raise HTTPException(
+            status_code=403,
+            detail="Source uploads are disabled in demo mode.",
+        )
+
     source_data, upload_file = form_data
 
     # Initialize file_path before try block so exception handlers can reference it
@@ -950,6 +959,14 @@ async def retry_source_processing(source_id: str):
 @router.delete("/sources/{source_id}")
 async def delete_source(source_id: str):
     """Delete a source."""
+    # ── Public Demo Lockdown ──────────────────────────────────────
+    import os
+    if os.environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"):
+        raise HTTPException(
+            status_code=403,
+            detail="Deleting sources is disabled in demo mode.",
+        )
+
     try:
         source = await Source.get(source_id)
         if not source:

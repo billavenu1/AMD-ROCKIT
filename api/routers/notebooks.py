@@ -89,6 +89,14 @@ async def get_notebooks(
 @router.post("/notebooks", response_model=NotebookResponse)
 async def create_notebook(notebook: NotebookCreate):
     """Create a new notebook."""
+    # ── Public Demo Lockdown ──────────────────────────────────────
+    import os
+    if os.environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"):
+        raise HTTPException(
+            status_code=403,
+            detail="Creating notebooks is disabled in demo mode.",
+        )
+
     try:
         new_notebook = Notebook(
             name=notebook.name,
@@ -333,6 +341,14 @@ async def delete_notebook(
     to this notebook (not linked to any other notebooks).
     """
     try:
+        # ── Public Demo Lockdown ──────────────────────────────────────
+        import os
+        if os.environ.get("DEMO_MODE", "").lower() in ("true", "1", "yes"):
+            raise HTTPException(
+                status_code=403,
+                detail="Deleting notebooks is disabled in demo mode.",
+            )
+
         notebook = await Notebook.get(notebook_id)
         if not notebook:
             raise HTTPException(status_code=404, detail="Notebook not found")

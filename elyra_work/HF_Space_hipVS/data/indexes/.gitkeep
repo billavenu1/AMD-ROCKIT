@@ -1,0 +1,2 @@
+# Persisted vector indexes are stored here as .npz files.
+# This directory is auto-created by the vector_store module.

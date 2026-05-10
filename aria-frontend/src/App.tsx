@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MessageSquareHeart } from 'lucide-react';
 import { NavBar } from './components/layout/NavBar';
 import { Sidebar } from './components/layout/Sidebar';
 import { RightPanel } from './components/layout/RightPanel';
@@ -11,6 +12,8 @@ import { ActiveDeploymentsView } from './components/deployments/ActiveDeployment
 import { VisionView } from './components/vision/VisionView';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { View } from './types';
+
+const FEEDBACK_URL = 'https://forms.gle/Cza63xPCqrJAjCHD6';
 
 export default function App() {
   // Navigation State
@@ -93,6 +96,18 @@ export default function App() {
           Coming Soon: {currentView}
         </div>
       )}
+
+      {/* Global Feedback Widget - always visible, bottom-right */}
+      <a
+        href={FEEDBACK_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2.5 px-5 py-3 bg-gradient-to-r from-[#1A1A1A]/95 to-[#1F1F2E]/95 backdrop-blur-md border border-[#8B5CF6]/40 rounded-full shadow-xl shadow-purple-500/15 hover:border-[#8B5CF6]/70 hover:shadow-purple-500/30 hover:scale-105 transition-all group cursor-pointer"
+        title="Leave a review"
+      >
+        <MessageSquareHeart className="w-5 h-5 text-[#A78BFA] group-hover:scale-110 transition-transform" />
+        <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">Feedback</span>
+      </a>
     </div>
   );
 }
